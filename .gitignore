@@ -1,3 +1,13 @@
+# Lein
+remindme/*.log
+remindme/target
+remindme/*-init.clj
+remindme/resources/public/js/compiled
+remindme/out
+
+# Secrets
+firebase-admin-key.json
+
 # Logs
 logs
 *.log
