@@ -1,4 +1,4 @@
 cron:
 - description: Check the pendings BLEEPED queries
   url: /check/60/bleeper
-  schedule: every 1 minute
+  schedule: every 1 minutes
