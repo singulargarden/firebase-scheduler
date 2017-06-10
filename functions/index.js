@@ -1,38 +1,61 @@
 const functions = require('firebase-functions')
 const admin = require('firebase-admin')
+const url = require('url')
 const scheduler = require('./scheduler')
 
 const schedule = scheduler.schedule
 const firebase = admin.initializeApp(functions.config().firebase)
 
-exports.doBleep = functions.https.onRequest((request, response) => {
-  console.log('BLEEP')
-  return response.send('OK').status(200).send()
-})
+function reqURL(req, newPath) {
+  return url.format({
+    protocol: 'https', //req.protocol, // by default this returns http which gets redirected
+    host: req.get('host'),
+    pathname: newPath
+  })
+}
+
+exports.doBleep = functions.https.onRequest((request, response) =>
+  firebase.database().ref('/bleep/').set({ lastCall: scheduler.now() })
+    .then(() => response.send('OK').status(200).end())
+)
+
+exports.showBleep = functions.https.onRequest((request, response) =>
+  firebase.database().ref('/bleep/').once('value')
+    .then(x => response.send(JSON.stringify(x.val() || {})).status(200).end())
+)
 
 exports.bleep = functions.https.onRequest((request, response) =>
   schedule(firebase, {
-    scheduler: 'bleeper',
-    time: { seconds: 5 },
-    query: { verb: 'POST', url: 'https://us-central1-singulardemo-1.cloudfunctions.net/doBleep' },
-    payload: 'blooo'
+    scheduler: request.query.scheduler || 'bleeper',
+    time: { seconds: request.query.seconds || 5 },
+    query: {
+      method: 'POST',
+      uri: reqURL(request, '/doBleep'),
+      body: 'blooop'
+    },
   }).then(() => response.send('bloop').status(200).end())
 )
 
 exports.longBleep = functions.https.onRequest((request, response) =>
   schedule(firebase, {
-    scheduler: 'bleeper',
-    time: { seconds: 60 },
-    query: { verb: 'POST', url: 'https://us-central1-singulardemo-1.cloudfunctions.net/doBleep' },
-    payload: 'bloooooop'
+    scheduler: request.query.scheduler || 'bleeper',
+    time: { seconds: request.query.seconds || 60 },
+    query: {
+      method: 'POST',
+      uri: reqURL(request, '/doBleep'),
+      body: 'blooooop'
+    },
   }).then(() => response.send('bloop').status(200).end())
 )
 
 exports.veryLongBleep = functions.https.onRequest((request, response) =>
   schedule(firebase, {
-    scheduler: 'bleeper',
-    time: { seconds: 300 },
-    query: { verb: 'POST', url: 'https://us-central1-singulardemo-1.cloudfunctions.net/doBleep' },
-    payload: 'bloooooooooop'
+    scheduler: request.query.scheduler || 'bleeper',
+    time: { seconds: request.query.seconds || 300 },
+    query: {
+      method: 'POST',
+      uri: reqURL(request, '/doBleep'),
+      body: 'bloooooooooop'
+    },
   }).then(() => response.send('bloop').status(200).end())
 )

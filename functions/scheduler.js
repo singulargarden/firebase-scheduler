@@ -5,19 +5,24 @@ function now() {
 }
 
 function scheduleTime(conf) {
-  const time = conf.time
-  const now = now()
-
-  return time.seconds * 1000 + now
+  return conf.time.seconds * 1000 + now()
 }
 
 function schedule(firebase, conf) {
+  const t = scheduleTime(conf)
+  conf.time.scheduledTS = t
+
   const scheduler = conf.scheduler
-  const key = numbers.generateID(scheduleTime(conf))
+  const key = numbers.generateID(t)
+
+  const newItem = {}
+  newItem['/all/' + key] = conf
+  newItem['/pending/' + key] = true
 
   return firebase.database()
-    .ref('/scheduler/' + scheduler + '/pending/' + key)
-    .set(conf)
+    .ref('/scheduler/' + scheduler)
+    .update(newItem)
 }
 
+module.exports.now = now
 module.exports.schedule = schedule

@@ -8,6 +8,11 @@ remindme/out
 # Secrets
 firebase-admin-key.json
 
+# Python
+__pycache__
+*.pyc
+.cache
+
 # Logs
 logs
 *.log

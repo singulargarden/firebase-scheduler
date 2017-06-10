@@ -24,7 +24,9 @@
   "dependencies": {
     "express": "^4.15.2",
     "firebase": "^4.1.2",
-    "firebase-admin": "^5.0.0"
+    "firebase-admin": "^5.0.0",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.1"
   },
   "devDependencies": {
     "@google-cloud/nodejs-repo-tools": "1.4.14"
