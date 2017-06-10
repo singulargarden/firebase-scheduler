@@ -14,10 +14,18 @@ function reqURL(req, newPath) {
   })
 }
 
-exports.doBleep = functions.https.onRequest((request, response) =>
-  firebase.database().ref('/bleep/').set({ lastCall: scheduler.now() })
+exports.doBleep = functions.https.onRequest((request, response) => {
+  const bleepRef = firebase.database().ref('/bleep/')
+  const newBleepKey = bleepRef.child('all').push().key
+  const now = scheduler.now()
+
+  const updates = {}
+  updates['/all/' + newBleepKey] = { call: now }
+  updates['/lastCall'] = now
+
+  bleepRef.update(updates)
     .then(() => response.send('OK').status(200).end())
-)
+})
 
 exports.showBleep = functions.https.onRequest((request, response) =>
   firebase.database().ref('/bleep/').once('value')

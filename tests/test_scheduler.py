@@ -29,6 +29,15 @@ def run(runner_name='bleeper', duration=5):
     return r.json()
 
 
+def show():
+    r = requests.get(URL_SHOW_BLEEP)
+    assert r.status_code == 200
+
+    j = r.json() or {}
+    j['lastRuns'] = [x['call'] for x in j.get('all', {}).values()]
+    return j
+
+
 def test_scheduler_check_api_returns_200():
     r = requests.get(url_runner())
     assert r.status_code == 200
@@ -121,9 +130,9 @@ def test_schedule_then_runner_will_trigger_my_final_endpoint():
     requests.get(URL_SHORT_BLEEP)
 
     # Act
-    j1 = requests.get(URL_SHOW_BLEEP).json() or {}
+    j1 = show()
     run()
-    j2 = requests.get(URL_SHOW_BLEEP).json() or {}
+    j2 = show()
 
     # Assert
     assert j1.get('lastCall', 0) < j2.get('lastCall', 0)
@@ -139,3 +148,15 @@ def test_runner_will_process_only_items_for_current_time():
     time.sleep(10)
     j = run()
     assert j['processedCount'] == 1
+
+
+def test_runner_will_wait_to_process_jobs_at_a_current_time():
+    # Arrange
+    requests.get(URL_SHORT_BLEEP, params=dict(seconds=1))
+    requests.get(URL_SHORT_BLEEP, params=dict(seconds=15))
+
+    # Act
+    run(duration=20)
+
+    last_runs = show()['lastRuns']
+    assert (last_runs[-1] - last_runs[-2]) > 8000

@@ -34,6 +34,20 @@ app.get('/', (req, res) => {
   res.status(200).send('Hello, World!').end()
 })
 
+function promiseDelay(ms, x) {
+  return new Promise(function (resolve) {
+    if (ms > 0) {
+      setTimeout(function () {
+        resolve(x)
+      }, ms)
+    }
+    else {
+      // Immediate
+      resolve(x)
+    }
+  })
+}
+
 function processScheduled(id, key, value) {
   console.log(`Processing item={id: ${id}, key: ${key}, value: ${util.inspect(value)}}`)
 
@@ -41,13 +55,19 @@ function processScheduled(id, key, value) {
   // then execute the query
   // then remove remove it from the list of pending items.
   return admin.database().ref(`/scheduler/${id}/all/${key}`).once('value')
-    .then((x) => {
-      const query = x.val().query
-      console.log(`Running item: ${id}, query: ${util.inspect(query)}`)
-      return request(query)
+    .then(x => x.val())
+    .then(x => {
+      const delta = x.time.scheduledTS - now()
+      console.log(`Waiting for item: ${id}, delta: ${delta}`)
+      return promiseDelay(delta, x)
+    })
+    .then(x => {
+      console.log(`Running item: ${id}, query: ${util.inspect(x.query)}`)
+      return request(x.query)
     })
     .then(() =>
-      admin.database().ref(`/scheduler/${id}/pending/${key}`).remove())
+      admin.database().ref(`/scheduler/${id}/pending/${key}`).remove()
+    )
 }
 
 function makeResponse(res, id, processed) {

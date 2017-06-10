@@ -15,3 +15,11 @@ It's:
 
 Works for only-once function for now, should be easy to turn this into a cron-job if you need it,
 reach out to us!
+
+## Current Limitations
+
+There's no correct acquire / release operation when the cron job starts, so you may miss jobs until the
+next cron call and multiple cron overlapping might trigger the same query twice.
+
+This would be fixed by having each cron lock its time range, then listen for firebase events instead of listing
+once at the start of the query. Use firebase `onDisconnect` operation to deal with errors. 
