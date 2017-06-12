@@ -92,9 +92,8 @@ function pendings(schedulerRef, maxDeltaSeconds) {
 }
 
 app.get('/check/:duration/:id', (req, res) => {
-
   // Allowed only from a cron job or in developement mode.
-  if (!isDev && req.get('X-Appengine-Cron') != true) {
+  if (!isDev && req.get('X-Appengine-Cron') !== 'true') {
     res.status(403)
     res.send('Forbidden')
     return res
