@@ -93,7 +93,9 @@ app.get('/check/:duration/:id', (req, res) => {
 
   // Allowed only from a cron job or in developement mode.
   if (!isDev && req.get('X-Appengine-Cron') != true) {
-    return res.send('Forbidden').status(403)
+    res.status(403)
+    res.send('Forbidden')
+    return res
   }
 
   const duration = parseInt(req.params['duration'])
