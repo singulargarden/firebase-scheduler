@@ -6,9 +6,9 @@ this'll make the test parallelisable and easier to reproduce.
 
 TODO: use POSTs instead of GETs, check that app engine cron supports it.
 """
+import os
 import requests
 import time
-import os
 
 URL_FIREBASE_FUNCTIONS = os.environ['URL_FIREBASE_FUNCTIONS']
 
@@ -44,8 +44,7 @@ def test_scheduler_check_api_returns_200():
 
 
 def test_scheduler_returns_last_execution_and_the_count_of_processed_items():
-    r = requests.get(url_runner())
-    j = r.json()
+    j = run()
 
     assert 'lastRun' in j
     assert 'processedCount' in j
