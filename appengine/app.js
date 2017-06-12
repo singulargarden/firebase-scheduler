@@ -4,7 +4,7 @@ const express = require('express')
 const admin = require('firebase-admin')
 const util = require('util')
 const request = require('request-promise')
-const numbers = require('./numbers')
+const scheduler = require('firebase-scheduler')
 
 
 // Prepare Firebase
@@ -81,7 +81,7 @@ function makeResponse(res, id, processed) {
 
 function pendings(schedulerRef, maxDeltaSeconds) {
   const time = now() + 1 + maxDeltaSeconds * 1000
-  const key = numbers.generateID(time, true)
+  const key = scheduler.scheduleID(time, true)
 
   console.log(`Retrieving all pending jobs up to time: ${time}, key: ${key}`)
 

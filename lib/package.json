@@ -1,6 +1,6 @@
 {
   "name": "firebase-scheduler",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Schedule tasks from firebase, use appengine to run them",
   "main": "index.js",
   "scripts": {
