@@ -11,13 +11,15 @@ const numbers = require('./numbers')
 // ----------------
 
 const serviceAccount = require('./firebase-admin-key.json')
+const config = require('./config.json')
+
 const isDev = process.env.DEV == 'true'
 
 console.log(`DEV MODE=${isDev}`)
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://singulardemo-1.firebaseio.com'
+  databaseURL: config.databaseURL
 })
 
 function now() {
