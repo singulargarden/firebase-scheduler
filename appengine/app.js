@@ -26,16 +26,12 @@ function now() {
   return (new Date()).getTime()
 }
 
-// Process Requests
-// ----------------
-
-const app = express()
-
-
-app.get('/', (req, res) => {
-  res.status(200).send('Hello, World!').end()
-})
-
+function makeResponse(res, id, processed) {
+  res.status(200)
+  res.setHeader('Content-Type', 'application/json')
+  res.send(JSON.stringify({ scheduler: id, lastRun: 0, processedCount: processed.length }))
+  return res
+}
 function promiseDelay(ms, x) {
   return new Promise(function (resolve) {
     if (ms > 0) {
@@ -49,6 +45,17 @@ function promiseDelay(ms, x) {
     }
   })
 }
+
+
+// Process Requests
+// ----------------
+
+const app = express()
+
+
+app.get('/', (req, res) => {
+  res.status(200).send('Hello, World!').end()
+})
 
 function processScheduled(id, key, value) {
   console.log(`Processing item={id: ${id}, key: ${key}, value: ${util.inspect(value)}}`)
@@ -67,28 +74,7 @@ function processScheduled(id, key, value) {
       console.log(`Running item: ${id}, query: ${util.inspect(x.query)}`)
       return request(x.query)
     })
-    .then(() =>
-      admin.database().ref(`/scheduler/${id}/pending/${key}`).remove()
-    )
-}
-
-function makeResponse(res, id, processed) {
-  res.status(200)
-  res.setHeader('Content-Type', 'application/json')
-  res.send(JSON.stringify({ scheduler: id, lastRun: 0, processedCount: processed.length }))
-  return res
-}
-
-function pendings(schedulerRef, maxDeltaSeconds) {
-  const time = now() + 1 + maxDeltaSeconds * 1000
-  const key = scheduler.scheduleID(time, true)
-
-  console.log(`Retrieving all pending jobs up to time: ${time}, key: ${key}`)
-
-  return schedulerRef
-    .orderByKey()
-    .endAt(key)
-    .once('value')
+    .then(() => scheduler.complete(admin, id, key))
 }
 
 app.get('/check/:duration/:id', (req, res) => {
@@ -102,9 +88,7 @@ app.get('/check/:duration/:id', (req, res) => {
   const duration = parseInt(req.params['duration'])
   const id = req.params['id']
 
-  const schedulerRef = admin.database().ref(`/scheduler/${id}/pending`)
-
-  pendings(schedulerRef, duration)
+  scheduler.pendings(admin, id, duration)
     .then(dataSnapshot => {
       const r = []
       console.log(`Scheduling ${dataSnapshot.numChildren()} items`)
@@ -112,7 +96,7 @@ app.get('/check/:duration/:id', (req, res) => {
       return Promise.all(r)
     })
     .then(xs => makeResponse(res, id, xs))
-    .catch(x => res.send(x).status(500).end())
+    .catch(x => res.send({ error: 'failed', from: x }).status(500).end())
 })
 
 

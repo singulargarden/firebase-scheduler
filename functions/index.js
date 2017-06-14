@@ -9,10 +9,10 @@
  * doBleep is the actual execution,
  * showBleep give your statistics on the execution.
  */
-const functions = require('firebase-functions')
-const admin = require('firebase-admin')
-const scheduler = require('firebase-scheduler')
 const url = require('url')
+const admin = require('firebase-admin')
+const functions = require('firebase-functions')
+const scheduler = require('firebase-scheduler')
 
 const schedule = scheduler.schedule
 const firebase = admin.initializeApp(functions.config().firebase)
@@ -34,7 +34,6 @@ function reqURL(req, newPath) {
 
 /**
  * Run the bleep
- * @type {HttpsFunction}
  */
 exports.doBleep = functions.https.onRequest((request, response) => {
   const bleepRef = firebase.database().ref('/bleep/')
@@ -51,7 +50,6 @@ exports.doBleep = functions.https.onRequest((request, response) => {
 
 /**
  * Show the last bleep
- * @type {HttpsFunction}
  */
 exports.showBleep = functions.https.onRequest((request, response) =>
   firebase.database().ref('/bleep/').once('value')
@@ -60,17 +58,40 @@ exports.showBleep = functions.https.onRequest((request, response) =>
 
 /**
  * Schedule a bleep
- * @type {HttpsFunction}
  */
 exports.bleep = functions.https.onRequest((request, response) =>
-  schedule(firebase, {
+  scheduler.schedule(firebase, {
     scheduler: request.query.scheduler || 'bleeper',
     time: { seconds: request.query.seconds || 5 },
     query: {
       method: 'POST',
       uri: reqURL(request, '/doBleep'),
-      body: 'blooop'
+      body: 'bloop'
     },
-  }).then(() => response.send('bloop').status(200).end())
+  }).then(x => response.status(200).json({ id: x }))
 )
 
+/**
+ * Access a bleep
+ */
+exports.get = functions.https.onRequest((request, response) => {
+  scheduler.get(firebase,
+    request.query.scheduler || 'bleeper',
+    request.query.item_id
+  ).then(x => {
+    if (x && x.pending) {
+      return response.status(200).json(x)
+    }
+    return response.status(404).json({ error: 'not-found' })
+  })
+})
+
+/**
+ * Cancel a bleep
+ */
+exports.cancel = functions.https.onRequest((request, response) =>
+  scheduler.cancel(firebase,
+    request.query.scheduler || 'bleeper',
+    request.query.item_id
+  ).then(x => response.status(200).json({ success: 'canceled' }))
+)

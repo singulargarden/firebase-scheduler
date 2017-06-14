@@ -1,4 +1,5 @@
-/config.json
-/firebase-admin-key.json
+/config.json*
+!/config.json.example
+/firebase-admin-key.json*
 /cron.yaml
 
